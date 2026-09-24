@@ -8,9 +8,9 @@ public:
 
     using tcp = boost::asio::ip::tcp;
 
-    static std::shared_ptr<Tunnel> create(tcp::socket a, tcp::socket b);
+    static std::shared_ptr<Tunnel> Create(tcp::socket&& a, tcp::socket&& b);
 
-    void start();
+    void Start();
 
 private:
 
@@ -20,9 +20,9 @@ private:
     Tunnel(const Tunnel&)            = delete;
     Tunnel& operator=(const Tunnel&) = delete;
 
-    void forward();
-    void backward();
-    void close();
+    void Forward();
+    void Backward();
+    void Close();
 
     tcp::socket a_;
     tcp::socket b_;

@@ -1,6 +1,6 @@
 #include "Tunnel.hpp"
 
-void Tunnel::forward(){
+void Tunnel::Forward(){
 
     namespace asio = boost::asio;
 
@@ -14,7 +14,7 @@ void Tunnel::forward(){
                 b_,
                 asio::buffer(*buffer_ptr, bytes_read),
                 [this, self, buffer_ptr](const boost::system::error_code& ec, size_t n){
-                    forward();
+                    Forward();
                 }
             );
 
@@ -22,7 +22,7 @@ void Tunnel::forward(){
     );
 }
 
-void Tunnel::backward(){
+void Tunnel::Backward(){
 
     namespace asio = boost::asio;
 
@@ -36,7 +36,7 @@ void Tunnel::backward(){
                 a_,
                 asio::buffer(*buffer_ptr, bytes_read),
                 [this, self, buffer_ptr](const boost::system::error_code& ec, size_t n){
-                    backward();
+                    Backward();
                 }
             );
 
@@ -44,13 +44,13 @@ void Tunnel::backward(){
     );
 }
 
-void Tunnel::start() {
-    forward();
-    backward();
+void Tunnel::Start() {
+    Forward();
+    Backward();
 }
 
 
-void Tunnel::close() {
+void Tunnel::Close() {
     if (!closed_) {
         closed_ = true;
         boost::system::error_code ec;
@@ -61,6 +61,6 @@ void Tunnel::close() {
     }
 }
 
-std::shared_ptr<Tunnel> Tunnel::create(tcp::socket a, tcp::socket b) {
+std::shared_ptr<Tunnel> Tunnel::Create(tcp::socket&& a, tcp::socket&& b) {
     return std::shared_ptr<Tunnel>(new Tunnel(std::move(a), std::move(b)));
 }
