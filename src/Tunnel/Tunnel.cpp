@@ -1,64 +1,59 @@
 #include "Tunnel.hpp"
 
-void Tunnel::Forward(){
+Tunnel::Tunnel(tcp::socket a, tcp::socket b) : a_(std::move(a)), b_(std::move(b)) {}
+
+void Tunnel::Forward(tcp::socket& from, tcp::socket& to, Buffer& buffer) {
+    if (closed_) return;
 
     namespace asio = boost::asio;
 
     auto self = shared_from_this();
-    auto buffer_ptr = std::make_shared<std::array<char, 1024*4>>();
-    a_.async_read_some(
-        asio::buffer(*buffer_ptr),
-        [this, self, buffer_ptr](const boost::system::error_code& ec, size_t bytes_read){
+    from.async_read_some(
+        asio::buffer(buffer),
+        [this, self, &from, &to, &buffer](const boost::system::error_code& ec, size_t bytes_read) {
+            if (ec) {
+                Close();
+                return;
+            }
 
             asio::async_write(
-                b_,
-                asio::buffer(*buffer_ptr, bytes_read),
-                [this, self, buffer_ptr](const boost::system::error_code& ec, size_t n){
-                    Forward();
+                to,
+                asio::buffer(buffer, bytes_read),
+                [this, self, &from, &to, &buffer](const boost::system::error_code& ec, size_t) {
+                    if (ec) {
+                        Close();
+                        return;
+                    }
+
+                    Forward(from, to, buffer);
                 }
             );
-
-        }
-    );
-}
-
-void Tunnel::Backward(){
-
-    namespace asio = boost::asio;
-
-    auto self = shared_from_this();
-    auto buffer_ptr = std::make_shared<std::array<char, 1024*4>>();
-    b_.async_read_some(
-        asio::buffer(*buffer_ptr),
-        [this, self, buffer_ptr](const boost::system::error_code& ec, size_t bytes_read){
-
-            asio::async_write(
-                a_,
-                asio::buffer(*buffer_ptr, bytes_read),
-                [this, self, buffer_ptr](const boost::system::error_code& ec, size_t n){
-                    Backward();
-                }
-            );
-
         }
     );
 }
 
 void Tunnel::Start() {
-    Forward();
-    Backward();
+    if (started_ || closed_) return;
+    started_ = true;
+
+    if (!a_.is_open() || !b_.is_open()) {
+        Close();
+        return;
+    }
+
+    Forward(a_, b_, a_buffer_);
+    Forward(b_, a_, b_buffer_);
 }
 
-
 void Tunnel::Close() {
-    if (!closed_) {
-        closed_ = true;
-        boost::system::error_code ec;
-        a_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-        a_.close(ec);
-        b_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-        b_.close(ec);
-    }
+    if (closed_) return;
+    closed_ = true;
+
+    boost::system::error_code ec;
+    a_.shutdown(tcp::socket::shutdown_both, ec);
+    a_.close(ec);
+    b_.shutdown(tcp::socket::shutdown_both, ec);
+    b_.close(ec);
 }
 
 std::shared_ptr<Tunnel> Tunnel::Create(tcp::socket&& a, tcp::socket&& b) {

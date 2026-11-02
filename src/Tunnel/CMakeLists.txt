@@ -1,5 +1,3 @@
-# Tunnel component as a simple library (no OBJECT libraries)
-
 add_library(Tunnel)
 
 target_sources(Tunnel
@@ -11,3 +9,5 @@ target_sources(Tunnel
 )
 
 target_compile_features(Tunnel PUBLIC cxx_std_17)
+
+target_link_libraries(Tunnel PUBLIC Boost::system)
