@@ -15,6 +15,9 @@ public:
         uint16_t control_port = 0;
         uint16_t proxy_port = 0;
         std::chrono::seconds wait_timeout{30};
+        boost::asio::ip::address_v4 control_bind_address = boost::asio::ip::address_v4::any();
+        boost::asio::ip::address_v4 proxy_bind_address = boost::asio::ip::address_v4::any();
+        boost::asio::ip::address_v4 public_bind_address = boost::asio::ip::address_v4::any();
     };
 
     static std::shared_ptr<Server> Create(boost::asio::io_context& io, ServerConfig cfg);
@@ -36,7 +39,7 @@ private:
 
     Server(boost::asio::io_context& io, ServerConfig cfg);
 
-    bool Listen(tcp::acceptor& acceptor, uint16_t port);
+    bool Listen(tcp::acceptor& acceptor, boost::asio::ip::address_v4 address, uint16_t port);
     void AcceptControl();
     void ReadPublicPort();
     void SendReply(uint8_t status);

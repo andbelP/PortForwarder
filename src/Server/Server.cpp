@@ -20,7 +20,7 @@ void Server::Start() {
         Stop();
         return;
     }
-    if (!Listen(control_acceptor_, cfg_.control_port)) {
+    if (!Listen(control_acceptor_, cfg_.control_bind_address, cfg_.control_port)) {
         Stop();
         return;
     }
@@ -44,14 +44,14 @@ void Server::Stop() {
     pending_.clear();
 }
 
-bool Server::Listen(tcp::acceptor& acceptor, uint16_t port) {
+bool Server::Listen(tcp::acceptor& acceptor, boost::asio::ip::address_v4 address, uint16_t port) {
     boost::system::error_code ec;
     acceptor.open(tcp::v4(), ec);
     if (!ec) acceptor.set_option(tcp::acceptor::reuse_address(true), ec);
-    if (!ec) acceptor.bind(tcp::endpoint(tcp::v4(), port), ec);
+    if (!ec) acceptor.bind(tcp::endpoint(address, port), ec);
     if (!ec) acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
     if (ec) {
-        std::cerr << "Listen on " << port << ": " << ec.message() << '\n';
+        std::cerr << "Listen on " << address << ':' << port << ": " << ec.message() << '\n';
         return false;
     }
     return true;
@@ -88,7 +88,8 @@ void Server::ReadPublicPort() {
 
             uint16_t port = (uint16_t(port_buf_[0]) << 8) | port_buf_[1];
             if (!port || port == cfg_.control_port || port == cfg_.proxy_port ||
-                !Listen(public_acceptor_, port) || !Listen(proxy_acceptor_, cfg_.proxy_port)) {
+                !Listen(public_acceptor_, cfg_.public_bind_address, port) ||
+                !Listen(proxy_acceptor_, cfg_.proxy_bind_address, cfg_.proxy_port)) {
                 SendReply(1);
                 return;
             }
