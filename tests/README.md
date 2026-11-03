@@ -37,4 +37,4 @@ ctest --test-dir build -R server_pairs_waiting_clients_fifo --output-on-failure
 ctest --test-dir build -j 4 --output-on-failure
 ```
 
-Use `-DBUILD_TESTING=OFF` to build only the libraries.
+Use `-DBUILD_TESTING=OFF` to build the libraries and executables without tests.

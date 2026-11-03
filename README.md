@@ -2,6 +2,33 @@
 
 Agent publishes one local TCP service through a server.
 
+Build the libraries and the two executables with CMake 3.23 or newer, a C++17
+compiler, and Boost.System installed:
+
+```sh
+cmake -S . -B build -DBUILD_TESTING=OFF
+cmake --build build --target agent server
+```
+
+The entry points are `bin/agent.cpp` and `bin/server.cpp`. The executables are
+written to `build/bin/` with a single-configuration generator.
+
+```sh
+# On the server: control port 7000, proxy port 7001.
+./build/bin/server 7000 7001
+
+# On the agent: publish local 127.0.0.1:8080 as server port 9000.
+# Replace 192.0.2.10 with the server's IPv4 address.
+./build/bin/agent 192.0.2.10 7000 7001 127.0.0.1 8080 9000
+```
+
+The server accepts an optional bind address applied to all three listeners:
+`./build/bin/server 7000 7001 127.0.0.1`. Without it, listeners bind to `0.0.0.0`.
+Addresses must be numeric IPv4 addresses, and ports must be in `1..65535`.
+Run either executable with `--help` for its argument order. Stop it with Ctrl+C.
+Each process serves one Agent/Server session and exits on a control failure;
+restart the server before connecting another Agent.
+
 ```cpp
 boost::asio::io_context io;
 auto agent = Agent::Create(io, cfg);
