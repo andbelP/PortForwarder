@@ -22,6 +22,9 @@ public:
     void Start();
     void Stop();
 
+    bool IsStarted() const noexcept { return started_; }
+    bool IsStopped() const noexcept { return stopped_; }
+
 private:
     struct PendingTunnel {
         explicit PendingTunnel(boost::asio::io_context& io) : app(io), proxy(io) {}
